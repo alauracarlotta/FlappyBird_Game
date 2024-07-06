@@ -98,8 +98,26 @@ class Passaro:
 		pygame.mask.from_surface(self.imagem)
 
 class Cano:
+	DISTANCIA_PASSAGEM_PASSARO_ENTRE_O_CANO_TOPO_E_CANO_BASE = 200 # PIXELS
+	VELOCIDADE = 5 # dupla de canos: de quanto em quanto aparecerá na tela
 
-	pass
+	def __init__(self, x):
+		self.x = x
+		self.altura = 0
+		self.posicao_top = 0
+		self.posicao_base = 0
+		self.CANO_TOPO = pygame.transform.flip(IMAGEM_CANO, False, True) # (eixo_x = rotate na horizontal, eixo_y = rotate na vertical)
+		self.CANO_BASE = IMAGEM_CANO
+		self.passaro_passou_do_cano = False # passaro já conseguiu passar pelo cano
+		#essa função serve para, quando criarmos o cano, ele chame a função que irá gerar a altura do cano
+		self.definir_altura()
+
+	def definir_altura(self):
+		self.altura = random.randrange(50, 450) # Como definimos a tela em 800px de height, definimos um espaço menor para a criação dos canos, garantindo assim que não haja uma discrepancia entre o cano do topo e o cano base
+		self.posicao_top = self.altura - self.CANO_TOPO.get_height()
+		self.posicao_base = self.altura - self.DISTANCIA_PASSAGEM_PASSARO_ENTRE_O_CANO_TOPO_E_CANO_BASE
+		# WIP 
+
 
 class Chao:
 	pass
