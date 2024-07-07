@@ -24,17 +24,17 @@ class Passaro:
 	IMAGENS = IMAGEM_PASSARO
 
 	# animações
-	ROTACAO_MAXIMA = 		25
-	VELOCIDADE_ROTACAO = 	20
-	TEMPO_ANIMACAO = 		5
+	ROTACAO_MAXIMA = 25
+	VELOCIDADE_ROTACAO = 20
+	TEMPO_ANIMACAO = 5
 
 	# atributos pássaro
-	def __init__(self, x, y):
-		self.x = x
-		self.y = y
+	def __init__(self, eixoX, eixoY):
+		self.eixoX = eixoX
+		self.eixoY = eixoY
 		self.angulo = 0
 		self.velocidade = 0
-		self.altura = self.y
+		self.altura = self.eixoY
 		self.tempo = 0
 		self.contador_da_imagem = 0
 		self.imagem_do_passaro = self.IMAGENS[0]
@@ -43,7 +43,7 @@ class Passaro:
 		# INFO fórmula física do deslocamento => S = so + vot + at²/2 (sorvetão rs)
 		self.velocidade = -10.5
 		self.tempo = 0
-		self.altura = self.y
+		self.altura = self.eixoY
 
 	def mover(self):
 		# INFO calcular o deslocamento
@@ -57,17 +57,17 @@ class Passaro:
 			deslocamento -= 2
 
 		# movimentar o pássaro
-		self.x += deslocamento
+		self.eixoX += deslocamento
 
 		# INFO ângulo do pássaro
-		if deslocamento < 0 or self.y < (self.altura + 50):
+		if deslocamento < 0 or self.eixoY < (self.altura + 50):
 			if self.angulo < self.ROTACAO_MAXIMA:
 				self.angulo = self.ROTACAO_MAXIMA
 		else:
 			if self.angulo > -90:
 				self.angulo -= self.VELOCIDADE_ROTACAO
 
-	def desenhar(self, tela):
+	def desenhar_passaro(self, tela):
 		# definir qual imagem do pássaro vamos usar
 		self.contador_da_imagem += 1
 		if self.contador_da_imagem < self.TEMPO_ANIMACAO:
@@ -89,7 +89,7 @@ class Passaro:
 
 		# desenhar a imagem
 		imagem_rotacionada = pygame.transform.rotate(self.imagem, self.angulo)
-		posicao_centro_imagem = self.imagem.get_rect(topleft=(self.x, self.y)).center
+		posicao_centro_imagem = self.imagem.get_rect(topleft=(self.eixoX, self.eixoY)).center
 		retangulo = imagem_rotacionada.get_rect(center=posicao_centro_imagem)
 		tela.blit(imagem_rotacionada, retangulo.topleft)
 	
@@ -101,10 +101,10 @@ class Cano:
 	DISTANCIA_PASSAGEM_PASSARO_ENTRE_O_CANO_TOPO_E_CANO_BASE = 200 # PIXELS
 	VELOCIDADE = 5 # dupla de canos: de quanto em quanto aparecerá na tela
 
-	def __init__(self, x):
-		self.x = x
+	def __init__(self, eixoX):
+		self.eixoX = eixoX
 		self.altura = 0
-		self.posicao_top = 0
+		self.posicao_topo = 0
 		self.posicao_base = 0
 		self.CANO_TOPO = pygame.transform.flip(IMAGEM_CANO, False, True) # (eixo_x = rotate na horizontal, eixo_y = rotate na vertical)
 		self.CANO_BASE = IMAGEM_CANO
@@ -114,10 +114,55 @@ class Cano:
 
 	def definir_altura(self):
 		self.altura = random.randrange(50, 450) # Como definimos a tela em 800px de height, definimos um espaço menor para a criação dos canos, garantindo assim que não haja uma discrepancia entre o cano do topo e o cano base
-		self.posicao_top = self.altura - self.CANO_TOPO.get_height()
+		self.posicao_topo = self.altura - self.CANO_TOPO.get_height()
 		self.posicao_base = self.altura - self.DISTANCIA_PASSAGEM_PASSARO_ENTRE_O_CANO_TOPO_E_CANO_BASE
-		# WIP 
+	
+	def mover_cano(self): # TODO ALGO ERRADO AQUI?
+		self.eixoX -= self.VELOCIDADE
+
+	def desenhar_cano(self, tela):
+		tela.blit(self.CANO_TOPO, (self.eixoX, self.posicao_topo)) # 2º parâmetro do blit é uma tupla
+		tela.blit(self.CANO_BASE, (self.eixoX, self.posicao_base))
+
+	def colidir_passaro_cano(self, passaro):
+		passaro_mask = passaro.get_mask()
+		cano_topo_mask = pygame.mask.from_surface(self.CANO_TOPO)
+		cano_base_mask = pygame.mask.from_surface(self.CANO_BASE)
+
+		# Calcular a distancia do passaro - topo e passaro - base
+		distancia_passaro_topo = (self.eixoX - passaro.eixoX, self.posicao_topo - round(passaro.eixoY)) # calculo é uma tupla / o round precisa ser adicionado pois o valor precisa ser um valor inteiro e como a posição do pássaro é muito quebrada, precisamos arredondar. Inclusive é ibnteressante arredondar o valor da self.posicao_topo também
+		distancia_passaro_base = (self.eixoX - passaro.eixoX, self.posicao_base - round(passaro.eixoY))
+
+		ponto_colisao_topo = passaro_mask.overlap(cano_topo_mask, distancia_passaro_topo) # overlap() verifica se há dois elementos dentro do mesmo pixel
+		ponto_colisao_base = passaro_mask.overlap(cano_base_mask, distancia_passaro_base) # ponto_colisao_topo e base são valores booleans
+
+		if ponto_colisao_topo or ponto_colisao_base:
+			return True
+		else:
+			return False
 
 
 class Chao:
-	pass
+	VELOCIDADE_CHAO = 5 # Mesma velocidade cano
+	LARGURA_CHAO = IMAGEM_CHAO.get_width()
+	IMAGEM = IMAGEM_CHAO
+
+	def __init__(self, eixoY) -> None:
+		self.eixoY = eixoY
+		self.eixoX_imagem_chao_1 = 0 # imagem chão 1
+		# self.x1 = self.eixoY + self.LARGURA_CHAO # imagem chão 2
+		self.eixoX_imagem_chao_2 = self.LARGURA_CHAO # imagem chão 2 / como self.x0 começa com zero e nós sempre vamos movimentar as duas imagens ao mesmo tempo, não é necessário somar x0 com LARGURA
+
+	def mover_chao(self):
+		self.self.eixoX_imagem_chao_1 -= self.VELOCIDADE_CHAO
+		self.self.eixoX_imagem_chao_2 -= self.VELOCIDADE_CHAO
+
+		if self.eixoX_imagem_chao_1 + self.LARGURA_CHAO < 0:
+			self.eixoX_imagem_chao_1 += self.LARGURA_CHAO # self.eixoX_imagem_chao_1 = self.eixoX_imagem_chao_1 + self.LARGURA_CHAO
+		if self.eixoX_imagem_chao_2 + self.LARGURA_CHAO < 0:
+			self.eixoX_imagem_chao_2 += self.LARGURA_CHAO
+
+	def desenhar_chao(self, tela):
+		tela.blit(self.IMAGEM, (self.eixoX_imagem_chao_1, self.eixoY))
+		tela.blit(self.IMAGEM, (self.eixoX_imagem_chao_2, self.eixoY))
+
