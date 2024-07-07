@@ -166,3 +166,5 @@ class Chao:
 		tela.blit(self.IMAGEM, (self.eixoX_imagem_chao_1, self.eixoY))
 		tela.blit(self.IMAGEM, (self.eixoX_imagem_chao_2, self.eixoY))
 
+def desenhar_tela_completa(): # (chao, cano, passaro) WIP 
+    pass
